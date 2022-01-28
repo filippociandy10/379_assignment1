@@ -44,6 +44,7 @@ void cdir (vector<string>& arguments){
 void run (vector<sample> &tasks,vector<string>& arguments, int counter, int index){
     pid_t pid;
     string temp;
+    int index;
     if ((pid == fork())<0){
         cout << "Fork error!";
     }
@@ -53,6 +54,7 @@ void run (vector<sample> &tasks,vector<string>& arguments, int counter, int inde
             temp = temp.append(arguments[i]);
             temp = temp.append(" ");
         }
+        index = tasks.size();
         sample s = {index,pid,temp};
         tasks.push_back(s);
     }
