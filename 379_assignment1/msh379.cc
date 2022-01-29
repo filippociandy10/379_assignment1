@@ -13,12 +13,15 @@
 #include <sys/stat.h>	
 #include <sys/wait.h>
 #include <sys/times.h>
+#include <sys/resource.h>
 #include <fcntl.h>
 #include <iostream>
 #include <chrono>
 #include <string>
 #include <sstream>
+#include <cctype>
 #include <vector>
+#include <algorithm>
 using namespace std;
 
 struct sample {int index; pid_t pid; string command;};
@@ -41,16 +44,25 @@ void cdir (vector<string>& arguments){
     }
 }
 
-void run (vector<sample> &tasks,vector<string>& arguments, int counter, int index){
+void run (vector<sample> &tasks,vector<string>& arguments, int counter){
     pid_t pid;
     string temp;
     int index;
-    if ((pid == fork())<0){
+
+    arguments.erase(arguments.begin());
+    vector <char*> argv = vector<char *>(arguments.size());
+    transform(arguments.begin(), arguments.end(), argv.begin(),
+                   [](const string &arg) { return (char *)arg.c_str(); });
+
+    if ((pid = fork())<0){
         cout << "Fork error!";
     }
-    else{
-        cout << pid <<endl;
-        for (int i=1; i<counter;i++){
+    else if (pid == 0){
+        cout << argv[0] << argv.data()[1] <<endl;
+        if (execvp(argv.data()[0],argv.data())<0){
+            cout << "execvp error!" <<endl;
+        }
+        for (int i=0; i<counter;i++){
             temp = temp.append(arguments[i]);
             temp = temp.append(" ");
         }
@@ -58,7 +70,7 @@ void run (vector<sample> &tasks,vector<string>& arguments, int counter, int inde
         sample s = {index,pid,temp};
         tasks.push_back(s);
     }
-    // cout << index << pid << temp << endl;
+    cout << "in run " <<endl;
 }
 
 int main(){
@@ -80,7 +92,6 @@ int main(){
     vector <sample> tasks;
     string line;
     int counter = 0;
-    int index = 0;
 
     cout << "msh379 [pid]: ";
     cin >> input;
@@ -105,8 +116,8 @@ int main(){
         }
         //run command
         if (arguments[0] == "run"){
-            cout << "in run";
-            run(tasks,arguments, counter,index);
+
+            run(tasks,arguments, counter);
         }
         //Clear vector and counter after each execution
         arguments.clear();
