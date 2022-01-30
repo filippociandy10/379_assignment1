@@ -19,6 +19,7 @@
 #include <ctime>
 #include <fstream>
 #include <iostream>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -111,6 +112,39 @@ void stop(vector<sample> &tasks, string taskno) {
     kill(pid_stop, SIGSTOP);
 }
 
+void cont(vector<sample> &tasks, string taskno) {
+    sample tasks_obj = tasks[stoi(taskno)];
+    pid_t pid_continue = tasks_obj.pid;
+    signal(SIGCONT, SIG_IGN);
+    kill(pid_continue, SIGCONT);
+}
+void check(string target_pid) {
+    const int MAX_LINE = 1234;
+    char line[MAX_LINE];
+    FILE *fp;
+    vector<string> fake_records;
+    vector<string> real_records;
+    if ((fp = popen("ps -u $USER -o user,pid,ppid,state,start,cmd --sort start",
+                    "r")) == NULL) {
+        cout << "cant open!" << endl;
+    }
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        string temp = "";
+        if (line != "\n") {
+            temp = temp + line;
+        }
+        fake_records.push_back(temp);
+        temp.clear();
+    }
+    // filippo 66986 66965 S 21 : 51 : 02 xeyes
+    for (int i = 0; i < fake_records.size(); i++) {
+        regex regex("^[A-Za-z]?\\s*" + target_pid +
+                    "\\s*[0 - 9]\\s * [A - Z]?\\s * (2 [0 - "
+                    "3] | [01] ? [0 - 9]): ([0 - 5] ? [0 - 9]): ([0 - "
+                    "5]?[0-9])\\s*.$");
+        // cout << regex_match(fake_records[i], regex) << endl;
+    }
+}
 void pr_times(clock_t real, struct tms *tmsstart, struct tms *tmsend) {
     static long clktck = 0;
     if (clktck == 0) {
@@ -175,8 +209,7 @@ int main() {
             cdir(arguments);
         }
         // run command
-        if (arguments[0] == "run") {
-            // cout << "Counter" << counter <<endl;
+        if ((arguments[0] == "run") && (tasks.size() <= 32)) {
             run(tasks, arguments, counter);
         }
         // lstasks command
@@ -193,10 +226,20 @@ int main() {
             string taskno = arguments[1];
             stop(tasks, taskno);
         }
+        // continue command
+        if (arguments[0] == "continue") {
+            string taskno = arguments[1];
+            cont(tasks, taskno);
+        }
         // terminate command
         if (arguments[0] == "terminate") {
             string taskno = arguments[1];
             terminate(tasks, taskno);
+        }
+        // check command
+        if (arguments[0] == "check") {
+            string target_pid = arguments[1];
+            check(target_pid);
         }
         // Clear vector and counter after each execution
         arguments.clear();
