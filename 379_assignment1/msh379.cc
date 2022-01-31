@@ -33,9 +33,9 @@ struct sample {
 
 void pdir(char *ptr, size_t size) {
     if (getcwd(ptr, size) == NULL) {
-        cout << "get cwd failed";
+        std::cout << "get cwd failed";
     } else {
-        cout << ptr << endl;
+        std::cout << ptr << endl;
     }
 }
 
@@ -43,7 +43,7 @@ void cdir(vector<string> &arguments) {
     const char *chdir_command;
     chdir_command = (arguments[1]).c_str();
     if (chdir(chdir_command) < 0) {
-        cout << "cdir failed\n";
+        std::cout << "cdir failed\n";
     }
 }
 
@@ -59,14 +59,16 @@ void run(vector<sample> &tasks, vector<string> &arguments, int counter) {
     argv.push_back(NULL);
 
     if ((pid = fork()) < 0) {
-        cout << "Fork error!";
+        std::cout << "Fork error!";
     }
     if (pid == 0) {
         if (arguments[0] == "myclock") {
             execlp("sh", "sh", argv[0], argv[1], NULL);
+        } else if (arguments[0] == "mMyclock") {
+            execlp("sh", "sh", argv[0], NULL);
         } else {
             if ((execvp(argv.data()[0], argv.data()) < 0)) {
-                cout << "execvp error!" << endl;
+                std::cout << "execvp error!" << endl;
             }
         }
     } else {
@@ -82,8 +84,8 @@ void run(vector<sample> &tasks, vector<string> &arguments, int counter) {
 
 void lstasks(vector<sample> tasks) {
     for (const auto &elem : tasks) {
-        cout << elem.index << ":    (pid= " << elem.pid << ", cmd= " << elem.cmd
-             << ")" << endl;
+        std::cout << elem.index << ":    (pid= " << elem.pid
+                  << ", cmd= " << elem.cmd << ")" << endl;
     }
 }
 
@@ -92,15 +94,15 @@ void terminate(vector<sample> &tasks, string taskno) {
     pid_t pid_terminate = tasks_obj.pid;
     kill(pid_terminate, 1);
     tasks.erase(tasks.begin() + stoi(taskno));
-    cout << tasks_obj.index << ":    (pid= " << tasks_obj.pid
-         << ", cmd= " << tasks_obj.cmd << ")"
-         << " terminated" << endl;
+    std::cout << tasks_obj.index << ":    (pid= " << tasks_obj.pid
+              << ", cmd= " << tasks_obj.cmd << ")"
+              << " terminated" << endl;
 }
 
 void exit(vector<sample> &tasks) {
     for (auto sample : tasks) {
         pid_t pid_terminate = sample.pid;
-        cout << "task " << sample.pid << " terminated." << endl;
+        std::cout << "task " << sample.pid << " terminated." << endl;
         kill(pid_terminate, 1);
     }
 }
@@ -123,10 +125,14 @@ void check(string target_pid) {
     char line[MAX_LINE];
     FILE *fp;
     vector<string> fake_records;
-    vector<string> real_records;
+    vector<vector<string> > real_records;
+    vector<string> temp_arr;
+    int index = 0;
+    char space = ' ';
+    string word = "";
     if ((fp = popen("ps -u $USER -o user,pid,ppid,state,start,cmd --sort start",
                     "r")) == NULL) {
-        cout << "cant open!" << endl;
+        std::cout << "cant open!" << endl;
     }
     while (fgets(line, sizeof(line), fp) != NULL) {
         string temp = "";
@@ -136,35 +142,63 @@ void check(string target_pid) {
         fake_records.push_back(temp);
         temp.clear();
     }
-    // filippo 66986 66965 S 21 : 51 : 02 xeyes
     for (int i = 0; i < fake_records.size(); i++) {
-        regex regex("^[A-Za-z]?\\s*" + target_pid +
-                    "\\s*[0 - 9]\\s * [A - Z]?\\s * (2 [0 - "
-                    "3] | [01] ? [0 - 9]): ([0 - 5] ? [0 - 9]): ([0 - "
-                    "5]?[0-9])\\s*.$");
-        // cout << regex_match(fake_records[i], regex) << endl;
+        string line = fake_records[i];
+        while (temp_arr.size() < 5) {
+            while ((line[index]) != space) {
+                word = word + line[index];
+                index++;
+            }
+            if (word != "") {
+                temp_arr.push_back(word);
+            }
+
+            word = "";
+            index++;
+        }
+        temp_arr.push_back(line.substr(index));
+        real_records.push_back(temp_arr);
+        temp_arr.clear();
+        index = 0;
+    }
+    for (auto x : real_records) {
+        if (x[1] == target_pid) {
+            if (x[3] == "Z") {
+                cout << "target_pid= " + target_pid + " terminated" << endl;
+            } else if (x[3] == "S") {
+                cout << "target_pid= " + target_pid + " is running:" << endl;
+            }
+            std::cout << "USER:      "
+                      << "PID:  "
+                      << "PPID: "
+                      << "S:  "
+                      << "STARTED: "
+                      << "CMD:" << endl;
+            std::cout << x[0] + "  " << x[1] + "  " << x[2] + "  "
+                      << x[3] + "  " << x[4] + "  " << x[5] << endl;
+        }
     }
 }
 void pr_times(clock_t real, struct tms *tmsstart, struct tms *tmsend) {
     static long clktck = 0;
     if (clktck == 0) {
         if ((clktck = sysconf(_SC_CLK_TCK)) < 0) {
-            cout << "sysconf error" << endl;
+            std::cout << "sysconf error" << endl;
         }
     }
-    cout << (" real: ") << (real / (double)clktck) << endl;
-    cout << (" user: ")
-         << ((tmsend->tms_utime - tmsstart->tms_utime) / (double)clktck)
-         << endl;
-    cout << (" sys: ")
-         << ((tmsend->tms_stime - tmsstart->tms_stime) / (double)clktck)
-         << endl;
-    cout << (" child user:  ")
-         << ((tmsend->tms_cutime - tmsstart->tms_cutime) / (double)clktck)
-         << endl;
-    cout << (" child sys:  ")
-         << ((tmsend->tms_cstime - tmsstart->tms_cstime) / (double)clktck)
-         << endl;
+    std::cout << (" real: ") << (real / (double)clktck) << endl;
+    std::cout << (" user: ")
+              << ((tmsend->tms_utime - tmsstart->tms_utime) / (double)clktck)
+              << endl;
+    std::cout << (" sys: ")
+              << ((tmsend->tms_stime - tmsstart->tms_stime) / (double)clktck)
+              << endl;
+    std::cout << (" child user:  ")
+              << ((tmsend->tms_cutime - tmsstart->tms_cutime) / (double)clktck)
+              << endl;
+    std::cout << (" child sys:  ")
+              << ((tmsend->tms_cstime - tmsstart->tms_cstime) / (double)clktck)
+              << endl;
 }
 int main() {
     // Start time of program
@@ -175,7 +209,7 @@ int main() {
     rlim_time.rlim_cur = 10;
     rlim_time.rlim_max = 2;
     if (setrlimit(RLIMIT_CPU, &rlim_time) == 0) {
-        cout << "Success\n";
+        std::cout << "Success\n";
     }
     // Path
     size_t size = 1024;
@@ -188,7 +222,7 @@ int main() {
     string line;
     int counter = 0;
     pid_t pid_process = getpid();
-    cout << "msh379 [" + to_string(pid_process) + "]:";
+    std::cout << "msh379 [" + to_string(pid_process) + "]:";
     while (command != "quit") {
         // Get all the arguments in cin and puts in a vector
         getline(cin, line);
@@ -244,7 +278,7 @@ int main() {
         // Clear vector and counter after each execution
         arguments.clear();
         counter = 0;
-        cout << "msh379 [" + to_string(pid_process) + "]:";
+        std::cout << "msh379 [" + to_string(pid_process) + "]:";
     }
     // Exit program
     clock_t end = times(&tmsstart);
