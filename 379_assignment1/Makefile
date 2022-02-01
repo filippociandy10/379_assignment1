@@ -9,18 +9,21 @@
 #        make -f Makefile scp  // send '$(target).tar.gz' by scp to 'scpDir'
 #        make -f Makefile clean     // remove unneeded files
 # ------------------------------------------------------------
-
-target=		submit
-allFiles=       Makefile starter.cc 
-scpDir=		username@labmachine.cs.ualberta.ca:directory
+allFiles = Makefile msh379.cc myclock mMyclock
+target = submit
 # ------------------------------------------------------------
-
-
-msh379:  msh379.cc
+make msh379:	msh379.cc
 	g++ -Wall msh379.cc -o msh379
 
-run:	msh379
+make run:	msh379.cc
+	g++ -Wall msh379.cc -o msh379
 	./msh379
 
-clean:
-	rm *~ out.* *.o
+make tar:
+	touch $(target).tar.gz
+	tar -cvf $(target).tar $(allFiles)
+	gzip $(target).tar
+
+
+make clean:
+	rm -rf out* submit*

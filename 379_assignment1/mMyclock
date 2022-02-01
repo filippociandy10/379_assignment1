@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 myclock outA&
 myclock outB&
 myclock outC&

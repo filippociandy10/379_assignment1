@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Usage: myclock [outfile]
 #        If outfile is specified, the script first removes "outfile" then iterates

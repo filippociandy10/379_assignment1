@@ -136,13 +136,13 @@ void check(string target_pid) {
     }
     while (fgets(line, sizeof(line), fp) != NULL) {
         string temp = "";
-        if (line != "\n") {
+        if ((string)line != "\n") {
             temp = temp + line;
         }
         fake_records.push_back(temp);
         temp.clear();
     }
-    for (int i = 0; i < fake_records.size(); i++) {
+    for (int i = 0; i < (int)fake_records.size(); i++) {
         string line = fake_records[i];
         while (temp_arr.size() < 5) {
             while ((line[index]) != space) {
@@ -206,10 +206,10 @@ int main() {
     clock_t start = times(&tmsstart);
     // Set limit on CPU time
     rlimit rlim_time;
-    rlim_time.rlim_cur = 10;
-    rlim_time.rlim_max = 2;
+    rlim_time.rlim_cur = 2;
+    rlim_time.rlim_max = 10;
     if (setrlimit(RLIMIT_CPU, &rlim_time) == 0) {
-        std::cout << "Success\n";
+        std::cout << "Set setrlimit successful!" << endl;
     }
     // Path
     size_t size = 1024;
