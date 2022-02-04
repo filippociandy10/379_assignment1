@@ -1,5 +1,5 @@
 #!/bin/bash
-myclock outA&
-myclock outB&
-myclock outC&
+sh myclock outA&
+sh myclock outB&
+sh myclock outC&
 wait

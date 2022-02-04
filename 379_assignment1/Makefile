@@ -15,15 +15,10 @@ target = submit
 make msh379:	msh379.cc
 	g++ -Wall msh379.cc -o msh379
 
-make run:	msh379.cc
-	g++ -Wall msh379.cc -o msh379
-	./msh379
-
 make tar:
 	touch $(target).tar.gz
 	tar -cvf $(target).tar $(allFiles)
 	gzip $(target).tar
-
 
 make clean:
 	rm -rf out* submit*
