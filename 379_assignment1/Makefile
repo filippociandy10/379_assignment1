@@ -9,7 +9,7 @@
 #        make -f Makefile scp  // send '$(target).tar.gz' by scp to 'scpDir'
 #        make -f Makefile clean     // remove unneeded files
 # ------------------------------------------------------------
-allFiles = Makefile msh379.cc myclock mMyclock
+allFiles = Makefile msh379.cc myclock mMyclock ProjectReport
 target = submit
 # ------------------------------------------------------------
 make msh379:	msh379.cc
